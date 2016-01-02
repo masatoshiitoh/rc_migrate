@@ -21,18 +21,22 @@
              start_vnode/1
              ]).
 
--record(state, {partition}).
+%% handover data when join/leave nodes.
+-record(state, {partition, data}).
 
 %% API
 start_vnode(I) ->
     riak_core_vnode_master:get_vnode_pid(I, ?MODULE).
 
 init([Partition]) ->
-    {ok, #state { partition=Partition }}.
+    {ok, #state { partition=Partition, data=0 }}.
 
 %% Sample command: respond to a ping
 handle_command(ping, _Sender, State) ->
     {reply, {pong, State#state.partition}, State};
+handle_command({add, N}, _Sender, State) ->
+    NewData = State#state.data + N,
+    {reply, {ok, NewData}, State#state{data=NewData}};
 handle_command(Message, _Sender, State) ->
     ?PRINT({unhandled_command, Message}),
     {noreply, State}.
