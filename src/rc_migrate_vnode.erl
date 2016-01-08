@@ -1,6 +1,7 @@
 -module(rc_migrate_vnode).
 -behaviour(riak_core_vnode).
 -include("rc_migrate.hrl").
+-include("riak_core_vnode.hrl").
 
 -export([start_vnode/1,
          init/1,
@@ -41,6 +42,23 @@ handle_command(Message, _Sender, State) ->
     ?PRINT({unhandled_command, Message}),
     {noreply, State}.
 
+
+object_list() -> [].
+convtokey(O) -> O.
+gotvalue(O) -> O.
+
+%% see http://jp.basho.com/posts/technical/understanding-riak_core-building-handoff/
+%% object_list function returns a list of the keys to fold over.
+%% write object_list by yourself.
+%% TODO Write this.
+handle_handoff_command(?FOLD_REQ{foldfun=VisitFun, acc0=Acc0}, _Sender, State) ->
+    %% eliding details for now. Don't worry, we'll get to them shortly.
+	Do = fun(Object, AccIn) ->
+		AccOut = VisitFun({<<"hoge">>, convtokey(Object)}, gotvalue(Object), AccIn)
+	end,
+    Final = lists:foldl(Do, Acc0, object_list()),
+    {reply, Final, State};
+
 handle_handoff_command(_Message, _Sender, State) ->
     {noreply, State}.
 
@@ -53,12 +71,20 @@ handoff_cancelled(State) ->
 handoff_finished(_TargetNode, State) ->
     {ok, State}.
 
+%% TODO Write this.
 handle_handoff_data(_Data, State) ->
     {reply, ok, State}.
 
 encode_handoff_item(_ObjectName, _ObjectValue) ->
     <<>>.
 
+%% TODO Write this.
+%% see http://jp.basho.com/posts/technical/understanding-riak_core-building-handoff/
+%% encode data? encode item?????
+encode_handoff_data(_ObjectName, _ObjectValue) ->
+    <<>>.
+
+%% TODO Write this.
 is_empty(State) ->
     {true, State}.
 
