@@ -23,7 +23,7 @@
              ]).
 
 %% handover data when join/leave nodes.
--record(state, {partition, data}).
+-record(state, {partition, data, pids}).
 
 %% API
 start_vnode(I) ->
@@ -35,9 +35,21 @@ init([Partition]) ->
 %% Sample command: respond to a ping
 handle_command(ping, _Sender, State) ->
     {reply, {pong, State#state.partition}, State};
+
+
+%% Name is new comer.
+handle_command({new, Name}, _Sender, State) ->
+    {ok, Pid} = worker:start_link(),
+    NewPids = dict:store(Name, Pid, State#state.pids),
+    NewState = State#state{pids = NewPids},
+    ?PRINT({new, Name}),
+    {reply, {{new, Pid}, State#state.partition}, NewState};
+
 handle_command({add, N}, _Sender, State) ->
-    NewData = State#state.data + N,
-    {reply, {ok, NewData}, State#state{data=NewData}};
+    Pid = dict:fetch(Name, State#state.pids),
+    Result = worker:add(Pid, N),
+    {reply, {ok, Result}, State};
+
 handle_command(Message, _Sender, State) ->
     ?PRINT({unhandled_command, Message}),
     {noreply, State}.

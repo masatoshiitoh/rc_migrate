@@ -4,12 +4,14 @@
 
 -export([
          ping/0,
-         add/1
+         new/1,
+         add/2
         ]).
 
 -ignore_xref([
               ping/0,
-              add/1
+              new/1,
+              add/2
              ]).
 
 %% Public API
@@ -21,8 +23,14 @@ ping() ->
     [{IndexNode, _Type}] = PrefList,
     riak_core_vnode_master:sync_spawn_command(IndexNode, ping, rc_migrate_vnode_master).
 
-add(N) ->
-    DocIdx = riak_core_util:chash_key({<<"service">>, <<"add">>}),
+new(Name) ->
+    DocIdx = riak_core_util:chash_key({<<"service">>, list_to_binary(Name)}),
+    PrefList = riak_core_apl:get_primary_apl(DocIdx, 1, rc_migrate),
+    [{IndexNode, _Type}] = PrefList,
+    riak_core_vnode_master:sync_spawn_command(IndexNode, {new, Name}, rc_migrate_vnode_master).
+
+add(Name, N) ->
+    DocIdx = riak_core_util:chash_key({<<"service">>, list_to_binary(Name)}),
     PrefList = riak_core_apl:get_primary_apl(DocIdx, 1, rc_migrate),
     [{IndexNode, _Type}] = PrefList,
     riak_core_vnode_master:sync_spawn_command(IndexNode, {add, N}, rc_migrate_vnode_master).
