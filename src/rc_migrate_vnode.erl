@@ -30,7 +30,7 @@ start_vnode(I) ->
     riak_core_vnode_master:get_vnode_pid(I, ?MODULE).
 
 init([Partition]) ->
-    {ok, #state { partition=Partition, data=0 }}.
+    {ok, #state { partition=Partition, data=0, pids=dict:new() }}.
 
 %% Sample command: respond to a ping
 handle_command(ping, _Sender, State) ->
@@ -45,9 +45,19 @@ handle_command({new, Name}, _Sender, State) ->
     ?PRINT({new, Name}),
     {reply, {{new, Pid}, State#state.partition}, NewState};
 
-handle_command({add, N}, _Sender, State) ->
+handle_command({add, Name, N}, _Sender, State) ->
     Pid = dict:fetch(Name, State#state.pids),
     Result = worker:add(Pid, N),
+    {reply, {ok, Result}, State};
+
+handle_command({get_state, Name}, _Sender, State) ->
+    Pid = dict:fetch(Name, State#state.pids),
+    Result = worker:get_state(Pid),
+    {reply, {ok, Result}, State};
+
+handle_command({set_state, Name, S}, _Sender, State) ->
+    Pid = dict:fetch(Name, State#state.pids),
+    Result = worker:set_state(Pid, S),
     {reply, {ok, Result}, State};
 
 handle_command(Message, _Sender, State) ->

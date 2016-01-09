@@ -8,9 +8,9 @@
 
 -export([start_link/0]).
 
--export([add/1]).
--export([set_state/1]).
--export([get_state/0]).
+-export([add/2]).
+-export([set_state/2]).
+-export([get_state/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -24,13 +24,13 @@
 %% ------------------------------------------------------------------
 
 start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+    gen_server:start_link(?MODULE, [], []).
 
-add(N) -> gen_server:call(?MODULE, {add, N}).
+add(Pid, N) -> gen_server:call(Pid, {add, N}).
 
-set_state(N) -> gen_server:call(?MODULE, {set_state, N}).
+set_state(Pid, N) -> gen_server:call(Pid, {set_state, N}).
 
-get_state() -> gen_server:call(?MODULE, get_state).
+get_state(Pid) -> gen_server:call(Pid, get_state).
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
