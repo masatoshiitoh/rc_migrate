@@ -67,7 +67,8 @@ handle_command(Message, _Sender, State) ->
 object_list(State) ->
 	dict:fetch_keys(State#state.pids).
 
-convtokey(Name) -> {<<"rc_migrate">>, list_to_binary(Name)}.
+%%convtokey(Name) -> {<<"rc_migrate">>, list_to_binary(Name)}.
+convtokey(Name) -> Name.
 
 gotvalue(Name, State) ->
 	{reply, {ok, Result}, State} = handle_command({get_state, Name}, self(), State),
@@ -104,7 +105,7 @@ handoff_finished(_TargetNode, State) ->
 
 handle_handoff_data(Data, State) ->
 	{Key, Value} = binary_to_term(Data),
-	{reply, {ok, Result}, State1} = handle_command({add, Key}, self(), State),
+	{reply, {ok, Result}, State1} = handle_command({new, Key}, self(), State),
 	{reply, {ok, Result}, State2} = handle_command({set_state, Key, Value}, self(), State1),
 	{reply, ok, State2}.
 
