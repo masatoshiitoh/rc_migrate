@@ -112,7 +112,7 @@ encode_handoff_item(Key, Value) ->
 	term_to_binary({Key, Value}).
 
 is_empty(State) ->
-	{dict:is_empty(State#state.pids), State}.
+	{dict:size(State#state.pids) == 0, State}.
 
 delete(State) ->
 	{ok, State}.

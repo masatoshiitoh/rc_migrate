@@ -31,22 +31,26 @@ new(Name) ->
     DocIdx = riak_core_util:chash_key({<<"rc_migrate">>, list_to_binary(Name)}),
     PrefList = riak_core_apl:get_primary_apl(DocIdx, 1, rc_migrate),
     [{IndexNode, _Type}] = PrefList,
+	?PRINT(IndexNode),
     riak_core_vnode_master:sync_spawn_command(IndexNode, {new, Name}, rc_migrate_vnode_master).
 
 add(Name, N) ->
     DocIdx = riak_core_util:chash_key({<<"rc_migrate">>, list_to_binary(Name)}),
     PrefList = riak_core_apl:get_primary_apl(DocIdx, 1, rc_migrate),
     [{IndexNode, _Type}] = PrefList,
+	?PRINT(IndexNode),
     riak_core_vnode_master:sync_spawn_command(IndexNode, {add, Name, N}, rc_migrate_vnode_master).
 
 get_state(Name) ->
     DocIdx = riak_core_util:chash_key({<<"rc_migrate">>, list_to_binary(Name)}),
     PrefList = riak_core_apl:get_primary_apl(DocIdx, 1, rc_migrate),
     [{IndexNode, _Type}] = PrefList,
+	?PRINT(IndexNode),
     riak_core_vnode_master:sync_spawn_command(IndexNode, {get_state, Name}, rc_migrate_vnode_master).
 
 set_state(Name, S) ->
     DocIdx = riak_core_util:chash_key({<<"rc_migrate">>, list_to_binary(Name)}),
     PrefList = riak_core_apl:get_primary_apl(DocIdx, 1, rc_migrate),
     [{IndexNode, _Type}] = PrefList,
+	?PRINT(IndexNode),
     riak_core_vnode_master:sync_spawn_command(IndexNode, {set_state, Name, S}, rc_migrate_vnode_master).
