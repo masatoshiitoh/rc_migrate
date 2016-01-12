@@ -71,8 +71,8 @@ object_list(State) ->
 convtokey(BinName) ->
 	{<<"rc_migrate">>, BinName}.
 
-gotvalue(BinName, State) ->
-	{reply, {ok, Result}, State} = handle_command({get_state, BinName}, self(), State),
+gotvalue(BinName) ->
+	{ok, Result} = worker:get_state(BinName),
 	Result.
 
 %% see http://jp.basho.com/posts/technical/understanding-riak_core-building-handoff/
@@ -84,9 +84,9 @@ handle_handoff_command(?FOLD_REQ{foldfun=VisitFun, acc0=Acc0}, _Sender, State) -
 	Do = fun(BinName, AccIn) ->
 		K = convtokey(BinName),
 		?PRINT(K),
-		V = term_to_binary({K, gotvalue(BinName, State)}),
-		?PRINT(V),
-		AccOut = VisitFun(K, V, AccIn),
+		Data = term_to_binary({K, gotvalue(BinName)}),
+		?PRINT(Data),
+		AccOut = VisitFun(K, Data, AccIn),
 		?PRINT(AccOut),
 		AccOut
 	end,
@@ -108,10 +108,11 @@ handoff_finished(_TargetNode, State) ->
 handle_handoff_data(Data, State) ->
 	{Composite, Value} = binary_to_term(Data),
 	{<<"rc_migrate">>, BinKey} = Composite,
-	{reply, {ok, Result, Partition}, State1} = handle_command({new, BinKey}, self(), State),
-	?PRINT(Partition),
-	{reply, {ok, _NewState}, State2} = handle_command({set_state, BinKey, Value}, self(), State1),
-	{reply, ok, State2}.
+	{ok, _Result} = worker:new(BinKey),
+	?PRINT(_Result),
+	{ok, _NewState} = worker:set_state(BinKey, Value),
+	?PRINT(_NewState),
+	{reply, ok, State}.
 
 encode_handoff_item(BinKey, Value) ->
 	term_to_binary({BinKey, Value}).
