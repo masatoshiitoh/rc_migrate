@@ -71,9 +71,8 @@ object_list(State) ->
 convtokey(BinName) ->
 	{<<"rc_migrate">>, BinName}.
 
-gotvalue(BinName) ->
-	{ok, Result} = worker:get_state(BinName),
-	Result.
+gotvalue(BinName, State) ->
+	local_get_state(BinName, State).
 
 %% see http://jp.basho.com/posts/technical/understanding-riak_core-building-handoff/
 %% object_list function returns a list of the keys to fold over.
@@ -84,7 +83,7 @@ handle_handoff_command(?FOLD_REQ{foldfun=VisitFun, acc0=Acc0}, _Sender, State) -
 	Do = fun(BinName, AccIn) ->
 		K = convtokey(BinName),
 		?PRINT(K),
-		Data = term_to_binary({K, gotvalue(BinName)}),
+		Data = term_to_binary({K, gotvalue(BinName, State)}),
 		?PRINT(Data),
 		AccOut = VisitFun(K, Data, AccIn),
 		?PRINT(AccOut),
@@ -122,7 +121,10 @@ start_and_set_state({BinName, WorkerState}, State) ->
 	NewState = State#state{pids = NewPids},
 	NewState.
 
-
+local_get_state(BinName, State) ->
+	Pid = dict:fetch(BinName, State#state.pids),
+	{ok, Result} = worker:get_state(Pid),
+	Result.
 
 encode_handoff_item(BinKey, Value) ->
 	term_to_binary({BinKey, Value}).
