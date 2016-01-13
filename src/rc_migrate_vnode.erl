@@ -106,13 +106,23 @@ handoff_finished(_TargetNode, State) ->
 	{ok, State}.
 
 handle_handoff_data(Data, State) ->
-	{Composite, Value} = binary_to_term(Data),
-	{<<"rc_migrate">>, BinKey} = Composite,
-	{ok, _Result} = worker:new(BinKey),
-	?PRINT(_Result),
-	{ok, _NewState} = worker:set_state(BinKey, Value),
-	?PRINT(_NewState),
-	{reply, ok, State}.
+	{{<<"rc_migrate">>, BinName} , WorkerState} = binary_to_term(Data),
+	?PRINT({BinName, WorkerState}),
+	NewState = case dict:find(BinName, State#state.pids) of
+		{ok, _ExistingPid} -> State;
+		error -> start_and_set_state({BinName, WorkerState}, State)
+	end,
+	{reply, ok, NewState}.
+
+%% returns State
+start_and_set_state({BinName, WorkerState}, State) ->
+	{ok, Pid} = worker:start_link(),
+	{ok, _NewWorkerState} = worker:set_state(Pid, WorkerState),
+	NewPids = dict:store(BinName, Pid, State#state.pids),
+	NewState = State#state{pids = NewPids},
+	NewState.
+
+
 
 encode_handoff_item(BinKey, Value) ->
 	term_to_binary({BinKey, Value}).
