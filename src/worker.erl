@@ -41,7 +41,7 @@ init(_Args) ->
 handle_call({add, N}, _From, N1) ->
     {reply, {ok, N+N1}, N+N1};
 
-handle_call({set_state, N}, _From, N1) ->
+handle_call({set_state, N}, _From, _N1) ->
     {reply, {ok, N} , N};
 
 handle_call(get_state, _From, N1) ->
