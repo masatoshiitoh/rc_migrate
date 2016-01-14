@@ -83,7 +83,10 @@ handle_handoff_command(?FOLD_REQ{foldfun=VisitFun, acc0=Acc0}, _Sender, State) -
 	Do = fun(BinName, AccIn) ->
 		K = convtokey(BinName),
 		?PRINT(K),
-		Data = term_to_binary({K, gotvalue(BinName, State)}),
+		V = gotvalue(BinName, State),
+		?PRINT(V),
+		%%Data = term_to_binary({K, V}),
+		Data = V, %% don't apply XXX_to_binary here.
 		?PRINT(Data),
 		AccOut = VisitFun(K, Data, AccIn),
 		?PRINT(AccOut),
@@ -108,13 +111,17 @@ handle_handoff_data(Data, State) ->
 	{{<<"rc_migrate">>, BinName} , WorkerState} = binary_to_term(Data),
 	?PRINT({BinName, WorkerState}),
 	NewState = case dict:find(BinName, State#state.pids) of
-		{ok, _ExistingPid} -> State;
-		error -> start_and_set_state({BinName, WorkerState}, State)
+		{ok, _ExistingPid} ->
+			State;
+		error ->
+			?PRINT({BinName, WorkerState}),
+			start_and_set_state({BinName, WorkerState}, State)
 	end,
 	{reply, ok, NewState}.
 
 %% returns State
 start_and_set_state({BinName, WorkerState}, State) ->
+	?PRINT({start_and_set_state, BinName, WorkerState}),
 	{ok, Pid} = worker:start_link(),
 	{ok, _NewWorkerState} = worker:set_state(Pid, WorkerState),
 	NewPids = dict:store(BinName, Pid, State#state.pids),
