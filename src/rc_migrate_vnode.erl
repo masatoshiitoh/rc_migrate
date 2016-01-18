@@ -68,10 +68,10 @@ handle_command(Message, _Sender, State) ->
 object_list(State) ->
 	dict:fetch_keys(State#state.pids).
 
-convtokey(BinName) ->
+make_key(BinName) ->
 	{<<"rc_migrate">>, BinName}.
 
-gotvalue(BinName, State) ->
+get_value(BinName, State) ->
 	local_get_state(BinName, State).
 
 %% see http://jp.basho.com/posts/technical/understanding-riak_core-building-handoff/
@@ -81,9 +81,9 @@ handle_handoff_command(?FOLD_REQ{foldfun=VisitFun, acc0=Acc0}, _Sender, State) -
 	ObjectBinNames = object_list(State),
 	%% eliding details for now. Don't worry, we'll get to them shortly.
 	Do = fun(BinName, AccIn) ->
-		K = convtokey(BinName),
+		K = make_key(BinName),
 		?PRINT(K),
-		V = gotvalue(BinName, State),
+		V = get_value(BinName, State),
 		?PRINT(V),
 		%%Data = term_to_binary({K, V}),
 		Data = V, %% don't apply XXX_to_binary here.
@@ -111,7 +111,8 @@ handle_handoff_data(Data, State) ->
 	{{<<"rc_migrate">>, BinName} , WorkerState} = binary_to_term(Data),
 	?PRINT({BinName, WorkerState}),
 	NewState = case dict:find(BinName, State#state.pids) of
-		{ok, _ExistingPid} ->
+		{ok, ExistingPid} ->
+			{ok, _NewWorkerState} = worker:set_state(ExistingPid, WorkerState),
 			State;
 		error ->
 			?PRINT({BinName, WorkerState}),
