@@ -142,7 +142,17 @@ is_empty(State) ->
 
 delete(State) ->
 	?PRINT({delete, object_list(State)}),
-	{ok, State}.
+	NewState = stop_proc(object_list(State), State),
+	?PRINT({deleted, NewState}),
+	{ok, NewState}.
+
+stop_proc([], State) -> State;
+
+stop_proc([BinName|L], State) ->
+	Pid = dict:fetch(BinName, State#state.pids),
+	ok = worker:stop(Pid),
+	NewDict = dict:erase(BinName, State#state.pids),
+	stop_proc(L, State#state{pids = NewDict}).
 
 handle_coverage(_Req, _KeySpaces, _Sender, State) ->
 	{stop, not_implemented, State}.
