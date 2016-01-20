@@ -141,6 +141,7 @@ is_empty(State) ->
 	{dict:size(State#state.pids) == 0, State}.
 
 delete(State) ->
+	?PRINT({delete, object_list(State)}),
 	{ok, State}.
 
 handle_coverage(_Req, _KeySpaces, _Sender, State) ->
