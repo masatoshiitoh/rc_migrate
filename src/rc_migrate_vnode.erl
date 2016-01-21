@@ -150,7 +150,8 @@ stop_proc([], State) -> State;
 
 stop_proc([BinName|L], State) ->
 	Pid = dict:fetch(BinName, State#state.pids),
-	ok = worker:stop(Pid),
+	_Result = stopped = worker:stop(Pid),
+	?PRINT({worker_stop_result, _Result}),
 	NewDict = dict:erase(BinName, State#state.pids),
 	stop_proc(L, State#state{pids = NewDict}).
 
